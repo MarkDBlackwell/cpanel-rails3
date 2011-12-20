@@ -2,6 +2,8 @@
 
 Adapter for webmasters to run applications written in Rails 3 on cPanel.
 
+(Under development -- not working, yet.)
+
 ##Description
 
 This app is for individual webmasters who use a web-hosting service (in particular, users of cPanel virtual hosts).
