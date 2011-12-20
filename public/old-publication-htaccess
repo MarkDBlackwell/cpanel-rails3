@@ -1,0 +1,62 @@
+# Notes:
+# o The following rewrite rules require you to make this symlink:
+#     /home/your_user_name/public_html/your_app_name ->
+#     /home/your_user_name/rails_apps/your_app_name/public
+#
+# o TODO: maybe disallow original URI's suffixed with '.html'.
+#
+# o At least in Rails (3.0.3), this configuration statement (in config/ application.rb), which allows your application to generate the proper sub-URI URL's for its static assets such as images,
+#
+#     config.action_controller.asset_path=proc{|p| "/your_app_name#{p}"}
+#
+# requires an extra 'your_app_name/' in rewrites 2.1.2 and 2.1.3(?), below.
+#
+# o Rewrites without [L] are cumulative, in Apache's RewriteRule's first argument. However, REQUEST_URI is always the original.
+#
+# Ref. http://httpd.apache.org/docs/1.3/mod/mod_rewrite.html
+#
+
+# 1. Simplify the rules for your sub-URI by redirecting a missing subdomain to 'www.':
+RewriteCond %{HTTP_HOST} ^your_domain\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^\/your_app_name.*$
+RewriteRule ^(.*)$ http://www.your_domain.com/$1 [L,R=301]
+
+# 2. Rewrite your Rails (3.0.3) application URI's to various files if they exist.
+
+# 2.1. Try to rewrite its page-cached URI's:
+
+# 2.1.1. Try to rewrite the sub-URI root to a file ('public/your_app_name.html') by suffixing '/your_app_name.html' for the next step:
+# TRY: this one could be final.
+RewriteCond %{HTTP_HOST} ^www\.your_domain\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^\/your_app_name\/$
+RewriteCond /home/your_user_name/public_html/your_app_name/your_app_name.html -f
+RewriteRule ^(your_app_name)\/$ $1/$1.html
+
+# 2.1.2. Try to rewrite a sub-URI, non-root URI to a file with extension '.html' (under tree, 'public/your_app_name/') by prefixing 'your_app_name/' and suffixing '.html' for the next step:
+# TRY: this one could be final.
+RewriteCond %{HTTP_HOST} ^www\.your_domain\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^\/your_app_name\/.*$
+RewriteCond /home/your_user_name/public_html/your_app_name/%{REQUEST_URI}.html -f
+RewriteRule ^(your_app_name)\/(.*)$ $1/$1/$2.html
+
+# 2.2. Try to rewrite its static asset URI's:
+
+# 2.1.3. Try to rewrite any (Javascript, CSS, etc.) URI in the sub-URI to a file (under tree, 'public/your_app_name/') by prefixing 'your_app_name/' for the next step:
+# TRY: this one could be final.
+RewriteCond %{HTTP_HOST} ^www\.your_domain\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^\/your_app_name\/.*$
+RewriteCond /home/your_user_name/public_html/your_app_name/%{REQUEST_URI} -f
+RewriteRule ^(your_app_name)\/(.*)$ $1/$1/$2
+
+# 2.2.1 Try to rewrite a static asset URI (images, etc., which are located differently!):  ???
+# TRY: without this one.
+RewriteCond %{HTTP_HOST} ^www\.your_domain\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^\/your_app_name.*$
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^(your_app_name)(.*)$ $1$2 [L]
+
+# 3. Rewrite all requests, which match none of the above files, to the port for Rails to handle:
+# Using '!' failed to work: RewriteCond /home/your_user_name/public_html/your_app_name/%{REQUEST_URI} !-f
+RewriteCond %{HTTP_HOST} ^www\.your_domain\.com$ [NC]
+RewriteCond %{REQUEST_URI} ^\/your_app_name.*$
+RewriteRule ^(your_app_name.*)$ http://127.0.0.1:12009/$1 [P,L]

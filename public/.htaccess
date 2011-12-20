@@ -1,0 +1,48 @@
+#
+# Rails 3.0.3 cPanel Apache settings.
+#
+# Don't show directory listings for URLs which map to a directory.
+Options -Indexes
+# Set the default handler to none.
+DirectoryIndex
+# Don't follow symbolic links in this directory or below.
+Options -FollowSymLinks
+
+# Rewrite module.
+<IfModule mod_rewrite.c>
+RewriteEngine on
+# Per http://httpd.apache.org/docs/2.2/mod/mod_rewrite.html#rewriteoptions :
+RewriteOptions inherit
+RewriteBase /webmas-gallery
+
+# 1. Simplify the rules for your sub-URI by redirecting a missing subdomain to 'www.':
+
+RewriteCond %{HTTP_HOST} ^your_user_name\.com$ [NC]
+RewriteRule ^(.*)$ http://www.your_user_name.com/webmas-gallery/$1 [L,R=301]
+
+# 2. Rewrite your Rails application URI's to various files if they exist.
+
+# 2.1. Rewrite its page-cached URI's:
+
+# 2.1.1. Try to rewrite the sub-URI root URI to a file ('public/your_app_name.html') with path '/home/your_user_name/public_html/your_app_name/your_app_name.html':
+
+RewriteCond %{HTTP_HOST} ^www\.your_user_name\.com$ [NC]
+RewriteCond %{REQUEST_FILENAME}webmas-gallery.html -f
+#SHOW RewriteRule ^$ /webmas-gallery/webmas-gallery.html?dr=%{DOCUMENT_ROOT}&rf=%{REQUEST_FILENAME} [L,R=301]
+RewriteRule ^$ /webmas-gallery/webmas-gallery.html [L]
+
+# 2.1.2. Try to rewrite a sub-URI, non-root URI to a file with extension '.html' (under tree, 'public/your_app_name/') by prefixing '/home/your_user_name/public_html/your_app_name' and suffixing '.html':
+
+RewriteCond %{HTTP_HOST} ^www\.your_user_name\.com$ [NC]
+RewriteCond %{DOCUMENT_ROOT}/webmas-gallery%{REQUEST_URI}.html -f
+#SHOW RewriteRule ^(.+)$ /webmas-gallery/$1.html?dr=%{DOCUMENT_ROOT}&ru=%{REQUEST_URI}&rf=%{REQUEST_FILENAME} [L,R=301]
+RewriteRule ^(.+)$ /webmas-gallery/webmas-gallery/$1.html [L]
+
+# 3. Rewrite all other requests (except existing files) to the Rails port:
+
+RewriteCond %{HTTP_HOST} ^www\.your_user_name\.com$ [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+#SHOW RewriteRule ^(.*)$ /webmas-gallery/webmas-gallery.html?rf=%{REQUEST_FILENAME} [L,R=301]
+RewriteRule ^(.*)$ http://127.0.0.1:12009/webmas-gallery/$1 [L,P]
+
+</IfModule>

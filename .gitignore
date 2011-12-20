@@ -1,0 +1,10 @@
+.bundle
+copy-of-*
+db/*.sqlite3
+db/*.sqlite3-journal
+log/
+out/
+public/index.html
+tmp/
+vendor/plugins/mocha/
+vendor/cache
